@@ -15,6 +15,7 @@ from segm.model.utils import checkpoint_filter_fn
 from segm.model.decoder import DecoderLinear
 from segm.model.decoder import MaskTransformer
 from segm.model.segmenter import Segmenter
+from segm.model.mean_shifter import MeanShifter
 import segm.utils.torch as ptu
 
 
@@ -97,15 +98,25 @@ def create_decoder(encoder, decoder_cfg):
         raise ValueError(f"Unknown decoder: {name}")
     return decoder
 
+def create_mean_shift(encoder, meanshift_cfg):
+    meanshift_cfg = meanshift_cfg.copy()
+    meanshift_cfg["d_encoder"] = encoder.d_model
+    mean_shift = MeanShifter(**meanshift_cfg)
+    return mean_shift
 
 def create_segmenter(model_cfg):
     model_cfg = model_cfg.copy()
     decoder_cfg = model_cfg.pop("decoder")
     decoder_cfg["n_cls"] = model_cfg["n_cls"]
+    meanshift_cfg = model_cfg.pop("mean_shift") if 'mean_shift' in model_cfg else None
 
     encoder = create_vit(model_cfg)
     decoder = create_decoder(encoder, decoder_cfg)
-    model = Segmenter(encoder, decoder, n_cls=model_cfg["n_cls"])
+    if meanshift_cfg:
+        mean_shifter = create_mean_shift(encoder, meanshift_cfg)
+        model = Segmenter(encoder, decoder, n_cls=model_cfg["n_cls"], mean_shifter=mean_shifter)
+    else:
+        model = Segmenter(encoder, decoder, n_cls=model_cfg["n_cls"], mean_shifter=None)
 
     return model
 

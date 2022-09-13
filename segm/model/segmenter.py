@@ -12,11 +12,13 @@ class Segmenter(nn.Module):
         encoder,
         decoder,
         n_cls,
+        mean_shifter=None,
     ):
         super().__init__()
         self.n_cls = n_cls
         self.patch_size = encoder.patch_size
         self.encoder = encoder
+        self.mean_shifter = mean_shifter
         self.decoder = decoder
 
     @torch.jit.ignore
@@ -39,6 +41,9 @@ class Segmenter(nn.Module):
         # remove CLS/DIST tokens for decoding
         num_extra_tokens = 1 + self.encoder.distilled
         x = x[:, num_extra_tokens:]
+
+        if self.mean_shifter:
+            x = self.mean_shifter(x)
 
         masks = self.decoder(x, (H, W))
 

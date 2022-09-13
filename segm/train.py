@@ -25,6 +25,7 @@ from segm.engine import train_one_epoch, evaluate
 
 
 @click.command(help="")
+@click.option("--meanshift/--no-meanshift", default=False, help="whether to use a Mean Shift module")
 @click.option("--log-dir", type=str, help="logging directory")
 @click.option("--dataset", type=str)
 @click.option("--im-size", default=None, type=int, help="dataset resize size")
@@ -46,6 +47,7 @@ from segm.engine import train_one_epoch, evaluate
 @click.option("--amp/--no-amp", default=False, is_flag=True)
 @click.option("--resume/--no-resume", default=True, is_flag=True)
 def main(
+    meanshift,
     log_dir,
     dataset,
     im_size,
@@ -96,6 +98,9 @@ def main(
     model_cfg["drop_path_rate"] = drop_path
     decoder_cfg["name"] = decoder
     model_cfg["decoder"] = decoder_cfg
+    if meanshift:
+        mean_shift_cfg = cfg["mean_shift"]
+        model_cfg["mean_shift"] = mean_shift_cfg
 
     # dataset config
     world_batch_size = dataset_cfg["batch_size"]
