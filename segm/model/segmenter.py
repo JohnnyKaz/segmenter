@@ -55,11 +55,22 @@ class Segmenter(nn.Module):
     def get_attention_map_enc(self, im, layer_id):
         return self.encoder.get_attention_map(im, layer_id)
 
+    def get_attention_map_meanshift(self, im, layer_id):
+        x = self.encoder(im, return_features=True)
+
+        # remove CLS/DIST tokens for decoding
+        num_extra_tokens = 1 + self.encoder.distilled
+        x = x[:, num_extra_tokens:]
+        return self.mean_shifter.get_attention_map(im, layer_id)
+
     def get_attention_map_dec(self, im, layer_id):
         x = self.encoder(im, return_features=True)
 
         # remove CLS/DIST tokens for decoding
         num_extra_tokens = 1 + self.encoder.distilled
         x = x[:, num_extra_tokens:]
+
+        if self.mean_shifter:
+            x = self.mean_shifter(x)
 
         return self.decoder.get_attention_map(x, layer_id)

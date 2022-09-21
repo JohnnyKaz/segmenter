@@ -132,4 +132,5 @@ dataset:
     window_stride: 512
 mean_shift:
     d_meanshift: 64
-    n_layers: 4
+    n_layers: 3
+    use_normalization: True
